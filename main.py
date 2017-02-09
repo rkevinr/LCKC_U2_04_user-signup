@@ -5,7 +5,7 @@ import cgi
 import re
 
 
-def build_page(username_error, password_error,
+def build_page(username, email, username_error, password_error,
                     verify_password_error, email_error):
     
     page_top = '''
@@ -27,7 +27,7 @@ def build_page(username_error, password_error,
     username_row = '''
               <td class="prompt"><label for="username">Username</label></td>
               <td>
-                <input name="username" type="text" value="">
+                <input name="username" type="text" value="''' + username + '''">
                 <span class="error">''' + username_error + '''</span>
               </td>
             </tr>'''
@@ -54,7 +54,7 @@ def build_page(username_error, password_error,
             <tr>
               <td class="prompt"><label for="email">Email (optional)</label></td>
               <td>
-                <input name="email" type="email" value="">
+                <input name="email" type="email" value="''' + email + '''">
                 <span class="error">''' + email_error + '''</span>
               </td>
             </tr>'''
@@ -70,14 +70,14 @@ def build_page(username_error, password_error,
     </html>
     '''
 
-    return page_top + username_row + password_row + \
-            verify_password_row + email_row + page_bottom
+    return (page_top + username_row + password_row + 
+            verify_password_row + email_row + page_bottom)
 
 
 class WelcomeHandler(webapp2.RequestHandler):
 
     def get(self):
-        self.response.write('Welcome, validated user!')
+        self.response.write('Welcome, ' + self.request.get("username") + '!')
 
 
 def is_valid_field(field_name, field_regex):
@@ -110,30 +110,43 @@ class MainHandler(webapp2.RequestHandler):
         verify_password = self.request.get("verify")         
         email = self.request.get("email") 
 
-        if not is_valid_field(username.strip(), USER_RE): 
-            err_user = ERROR_USER
+        all_fields_valid = True
 
-        stripped_password = password.strip()
+        stripped_username = username.rstrip().lstrip()
+        if not is_valid_field(stripped_username, USER_RE): 
+            err_user = ERROR_USER
+            all_fields_valid = False
+
+        stripped_password = password.rstrip().lstrip()
         stripped_verify_password = verify_password.strip()
 
         if not is_valid_field(stripped_password, PASS_RE):
             err_passwd = ERROR_PASSWORD
+            all_fields_valid = False
         
-        if not is_valid_field(stripped_verify_password, PASS_RE):
-            err_verify_passwd = ERROR_PASSWORD
+        # if not is_valid_field(stripped_verify_password, PASS_RE):
+        #    err_verify_passwd = ERROR_PASSWORD
         if stripped_verify_password != stripped_password:
             err_verify_passwd = ERROR_VERIFY_PASSWORD
+            all_fields_valid = False
 
-        if not (is_valid_field(email, EMAIL_RE) or len(email.strip()) == 0):
+        stripped_email_addr = email.rstrip().lstrip()
+        if not (is_valid_field(stripped_email_addr, EMAIL_RE) or
+                        len(stripped_email_addr) == 0):
             err_email_addr = ERROR_EMAIL_ADDR
+            all_fields_valid = False
 
-        updated_page = build_page(err_user, err_passwd, err_verif_passwd,
-                                        err_email_addr)
-        self.response.write(updated_page)
+        if all_fields_valid:
+            self.redirect('/welcome?username=' + stripped_username)
+        else:
+            updated_page = build_page(stripped_username, stripped_email_addr,
+                                        err_user, err_passwd, err_verify_passwd,
+                                            err_email_addr)
+            self.response.write(updated_page)
 
 
     def get(self):
-        starter_page = build_page("", "", "", "")
+        starter_page = build_page("", "", "", "", "", "")
         self.response.write(starter_page)
 
 

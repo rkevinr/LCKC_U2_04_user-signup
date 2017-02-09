@@ -77,7 +77,7 @@ def build_page(username, email, username_error, password_error,
 class WelcomeHandler(webapp2.RequestHandler):
 
     def get(self):
-        self.response.write('Welcome, ' + self.request.get("username") + '!')
+        self.response.write('<h2>Welcome, ' + self.request.get("username") + '!</h2>')
 
 
 def is_valid_field(field_name, field_regex):
@@ -100,7 +100,7 @@ class MainHandler(webapp2.RequestHandler):
 
         err_user = ''
         err_passwd = ''
-        err_verif_passwd = ''
+        err_verify_passwd = ''
         err_email_addr = ''
 
         # the form itself COULD specify "required" for the required fields,
@@ -118,7 +118,7 @@ class MainHandler(webapp2.RequestHandler):
             all_fields_valid = False
 
         stripped_password = password.rstrip().lstrip()
-        stripped_verify_password = verify_password.strip()
+        stripped_verify_password = verify_password.rstrip().lstrip()
 
         if not is_valid_field(stripped_password, PASS_RE):
             err_passwd = ERROR_PASSWORD
